@@ -28,7 +28,7 @@
 
       let coinCode = urlParam("coinCode") || "AAPL";
       let precision = urlParam("precision");
-      let intervalType = urlParam("type") || "60";
+      let intervalType = urlParam("type") || "1D";
       let locale = urlParam("locale") || "en";
       let env = urlParam("env") || "prod";
       let platform = urlParam("platform") || "ios";
@@ -40,7 +40,6 @@
           symbol: coinCode,
           interval: intervalType,
           container_id: "tv_chart_container",
-
           //	BEWARE: no trailing slash is expected in feed URL
           datafeed: new Datafeeds.UDFCompatibleDatafeed(
             "https://demo_feed.tradingview.com"
