@@ -1,1 +1,163 @@
-hello world
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>kikitrade</title>
+
+    <!-- Fix for iOS Safari zooming bug -->
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+
+    <script type="text/javascript" src="./js/charting_library.js"></script>
+    <script type="text/javascript" src="./js/polyfills.js"></script>
+    <script type="text/javascript" src="./js/bundle.js"></script>
+
+    <script type="text/javascript">
+      const urlParam = (name) => {
+        var results = new RegExp("[\?&]" + name + "=([^&#]*)").exec(
+          window.location.href
+        );
+        if (results == null) {
+          return null;
+        } else {
+          return decodeURI(results[1]) || 0;
+        }
+      };
+
+      let coinCode = urlParam("coinCode") || "AAPL";
+      let precision = urlParam("precision");
+      let intervalType = urlParam("type") || "60";
+      let locale = urlParam("locale") || "en";
+      let env = urlParam("env") || "prod";
+      let platform = urlParam("platform") || "ios";
+
+      function initOnReady() {
+        var s = (window.tvWidget = new TradingView.widget({
+          // debug: true, // uncomment this line to see Library errors and warnings in the console
+          fullscreen: true,
+          symbol: coinCode,
+          interval: intervalType,
+          container_id: "tv_chart_container",
+
+          //	BEWARE: no trailing slash is expected in feed URL
+          datafeed: new Datafeeds.UDFCompatibleDatafeed(
+            "https://demo_feed.tradingview.com"
+          ),
+          library_path: "charting_library/",
+          locale: locale,
+
+          disabled_features: [
+            "left_toolbar",
+            "header_widget",
+            "timeframes_toolbar",
+            "edit_buttons_in_legend",
+            "context_menus",
+            "control_bar",
+            "border_around_the_chart",
+          ],
+          enabled_features: ["study_templates"],
+          charts_storage_url: "https://saveload.tradingview.com",
+          charts_storage_api_version: "1.1",
+          client_id: "tradingview.com",
+          user_id: "public_user_id",
+        }));
+
+        let t, tt;
+
+        // setTimeout(function(){
+        //     s.removeEntity(t)
+        // },4000)
+
+        var messageHandler = function (event) {
+          try {
+            let data = JSON.parse(event.data);
+            if (data && typeof data.newMainStudy !== "undefined") {
+              t && s.removeEntity(t);
+              let symbol = data.newMainStudy;
+              switch (symbol) {
+                case "MA":
+                  t = s.createStudy(
+                    "Moving Average",
+                    false,
+                    false,
+                    [26],
+                    null,
+                    { "Plot.linewidth": 10 }
+                  );
+                  break;
+                case "EMA":
+                  t = s.createStudy(
+                    "Moving Average Exponential",
+                    false,
+                    false,
+                    [26]
+                  );
+                  break;
+                case "BOLL":
+                  t = s.createStudy("Bollinger Bands", false, false, [26]);
+                  break;
+              }
+            }
+
+            if (data && typeof data.newSecondStudy !== "undefined") {
+              tt && s.removeEntity(tt);
+              let symbol = data.newSecondStudy;
+              switch (symbol) {
+                case "MACD":
+                  tt = s.createStudy("MACD", false, false, [
+                    14,
+                    30,
+                    "close",
+                    9,
+                  ]);
+                  break;
+                case "KDJ":
+                  tt = s.createStudy("Stochastic", false, false, [26], null, {
+                    "%d.color": "#FF0000",
+                  });
+                  break;
+
+                case "RSI":
+                  tt = s.createStudy("Relative Strength Index", false, false, [
+                    26,
+                  ]);
+                  break;
+                case "WR":
+                  tt = s.createStudy("Williams %R", false, false, [26]);
+                  break;
+              }
+            }
+          } catch (e) {
+            // alert(e)
+          }
+        };
+
+        if (platform == "android") {
+          document.addEventListener(
+            "message",
+            function (event) {
+              messageHandler(event);
+            },
+            false
+          );
+        } else {
+          window.addEventListener(
+            "message",
+            function (event) {
+              messageHandler(event);
+            },
+            false
+          );
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", initOnReady, false);
+    </script>
+  </head>
+
+  <body style="margin: 0px">
+    <div id="tv_chart_container"></div>
+  </body>
+</html>
